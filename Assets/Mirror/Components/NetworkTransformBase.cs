@@ -85,9 +85,9 @@ namespace Mirror
         {
             return new Snapshot(
                 Mathf.LerpUnclamped(from.timestamp, to.timestamp, t),
-                Vector3.LerpUnclamped(from.position, to.position, t),
-                Quaternion.LerpUnclamped(from.rotation, to.rotation, t),
-                Vector3.LerpUnclamped(from.scale, to.scale, t)
+                Vector3.LerpUnclamped(from.transform.position, to.transform.position, t),
+                Quaternion.LerpUnclamped(from.transform.rotation, to.transform.rotation, t),
+                Vector3.LerpUnclamped(from.transform.scale, to.transform.scale, t)
             );
         }
 
@@ -106,9 +106,9 @@ namespace Mirror
         void ApplySnapshot(Snapshot snapshot)
         {
             // local position/rotation for VR support
-            targetComponent.localPosition = snapshot.position;
-            targetComponent.localRotation = snapshot.rotation;
-            targetComponent.localScale = snapshot.scale;
+            targetComponent.localPosition = snapshot.transform.position;
+            targetComponent.localRotation = snapshot.transform.rotation;
+            targetComponent.localScale = snapshot.transform.scale;
         }
 
         // helper function to apply snapshots.
@@ -234,6 +234,8 @@ namespace Mirror
 
         // remote calls ////////////////////////////////////////////////////////
         // Cmds for both channels depending on configuration
+        // => only send position/rotation/scale.
+        //    use timestamp from batch to save bandwidth.
         [Command(channel = Channels.Reliable)]
         void CmdClientToServerSync_Reliable(Snapshot snapshot) => OnClientToServerSync(snapshot);
         [Command(channel = Channels.Unreliable)]

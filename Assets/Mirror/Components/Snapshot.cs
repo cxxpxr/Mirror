@@ -5,6 +5,22 @@ using UnityEngine;
 
 namespace Mirror
 {
+    // transform part of the Snapshot so we can send it over the wire without
+    // timestamp.
+    public struct SnapshotTransform
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+        public Vector3 scale;
+
+        public SnapshotTransform(Vector3 position, Quaternion rotation, Vector3 scale)
+        {
+            this.position = position;
+            this.rotation = rotation;
+            this.scale = scale;
+        }
+    }
+
     public struct Snapshot
     {
         // time or sequence are needed to throw away older snapshots.
@@ -24,16 +40,12 @@ namespace Mirror
         // [REMOTE TIME, NOT LOCAL TIME]
         public float timestamp;
 
-        public Vector3 position;
-        public Quaternion rotation;
-        public Vector3 scale;
+        public SnapshotTransform transform;
 
         public Snapshot(float timestamp, Vector3 position, Quaternion rotation, Vector3 scale)
         {
             this.timestamp = timestamp;
-            this.position = position;
-            this.rotation = rotation;
-            this.scale = scale;
+            this.transform = new SnapshotTransform(position, rotation, scale);
         }
     }
 }
