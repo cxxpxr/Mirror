@@ -237,16 +237,24 @@ namespace Mirror
         // => only send position/rotation/scale.
         //    use timestamp from batch to save bandwidth.
         [Command(channel = Channels.Reliable)]
-        void CmdClientToServerSync_Reliable(Snapshot snapshot) => OnClientToServerSync(snapshot);
+        void CmdClientToServerSync_Reliable(SnapshotTransform snapshotTransform) => OnClientToServerSync(snapshotTransform);
         [Command(channel = Channels.Unreliable)]
-        void CmdClientToServerSync_Unreliable(Snapshot snapshot) => OnClientToServerSync(snapshot);
+        void CmdClientToServerSync_Unreliable(SnapshotTransform snapshotTransform) => OnClientToServerSync(snapshotTransform);
 
         // local authority client sends sync message to server for broadcasting
-        void OnClientToServerSync(Snapshot snapshot)
+        void OnClientToServerSync(SnapshotTransform snapshotTransform)
         {
             // apply if in client authority mode
             if (clientAuthority)
             {
+                // construct snapshot with batch timestamp to save bandwidth
+                Snapshot snapshot = new Snapshot(
+                    (float)connectionToClient.remoteTimeStamp,
+                    snapshotTransform.position,
+                    snapshotTransform.rotation,
+                    snapshotTransform.scale
+                );
+
                 // add to buffer (or drop if older than first element)
                 InsertIfNewEnough(snapshot, serverBuffer);
             }
@@ -254,16 +262,24 @@ namespace Mirror
 
         // Rpcs for both channels depending on configuration
         [ClientRpc(channel = Channels.Reliable)]
-        void RpcServerToClientSync_Reliable(Snapshot snapshot) => OnServerToClientSync(snapshot);
+        void RpcServerToClientSync_Reliable(SnapshotTransform snapshotTransform) => OnServerToClientSync(snapshotTransform);
         [ClientRpc(channel = Channels.Unreliable)]
-        void RpcServerToClientSync_Unreliable(Snapshot snapshot) => OnServerToClientSync(snapshot);
+        void RpcServerToClientSync_Unreliable(SnapshotTransform snapshotTransform) => OnServerToClientSync(snapshotTransform);
 
         // server broadcasts sync message to all clients
-        void OnServerToClientSync(Snapshot snapshot)
+        void OnServerToClientSync(SnapshotTransform snapshotTransform)
         {
             // apply for all objects except local player with authority
             if (!IsClientWithAuthority)
             {
+                // construct snapshot with batch timestamp to save bandwidth
+                Snapshot snapshot = new Snapshot(
+                    (float)connectionToServer.remoteTimeStamp,
+                    snapshotTransform.position,
+                    snapshotTransform.rotation,
+                    snapshotTransform.scale
+                );
+
                 // add to buffer (or drop if older than first element)
                 InsertIfNewEnough(snapshot, clientBuffer);
             }
@@ -281,10 +297,12 @@ namespace Mirror
                 {
                     Snapshot snapshot = ConstructSnapshot();
 
+                    // send snapshot without timestamp.
+                    // receiver gets it from batch timestamp to save bandwidth.
                     if (channelId == Channels.Reliable)
-                        RpcServerToClientSync_Reliable(snapshot);
+                        RpcServerToClientSync_Reliable(snapshot.transform);
                     else
-                        RpcServerToClientSync_Unreliable(snapshot);
+                        RpcServerToClientSync_Unreliable(snapshot.transform);
 
                     lastServerSendTime = Time.time;
                 }
@@ -313,10 +331,12 @@ namespace Mirror
                     {
                         Snapshot snapshot = ConstructSnapshot();
 
+                        // send snapshot without timestamp.
+                        // receiver gets it from batch timestamp to save bandwidth.
                         if (channelId == Channels.Reliable)
-                            CmdClientToServerSync_Reliable(snapshot);
+                            CmdClientToServerSync_Reliable(snapshot.transform);
                         else
-                            CmdClientToServerSync_Unreliable(snapshot);
+                            CmdClientToServerSync_Unreliable(snapshot.transform);
 
                         lastClientSendTime = Time.time;
                     }
