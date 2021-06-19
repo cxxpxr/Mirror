@@ -247,9 +247,13 @@ namespace Mirror
             // apply if in client authority mode
             if (clientAuthority)
             {
+                // only player owned objects (with a connection) can send to
+                // server. we can get the timestamp from the connection.
+                float timestamp = (float)connectionToClient.remoteTimeStamp;
+
                 // construct snapshot with batch timestamp to save bandwidth
                 Snapshot snapshot = new Snapshot(
-                    (float)connectionToClient.remoteTimeStamp,
+                    timestamp,
                     snapshotTransform.position,
                     snapshotTransform.rotation,
                     snapshotTransform.scale
@@ -272,9 +276,15 @@ namespace Mirror
             // apply for all objects except local player with authority
             if (!IsClientWithAuthority)
             {
+                // on the client, we receive rpcs for all entities.
+                // not all of them have a connectionToServer.
+                // but all of them go through NetworkClient.connection.
+                // we can get the timestamp from there.
+                float timestamp = (float)NetworkClient.connection.remoteTimeStamp;
+
                 // construct snapshot with batch timestamp to save bandwidth
                 Snapshot snapshot = new Snapshot(
-                    (float)connectionToServer.remoteTimeStamp,
+                    timestamp,
                     snapshotTransform.position,
                     snapshotTransform.rotation,
                     snapshotTransform.scale
