@@ -26,8 +26,8 @@ namespace Mirror
         [Tooltip("Reliable(=0) by default, along with the rest of Mirror. Feel free to use Unreliable (=1).")]
         public int channelId = Channels.Reliable;
         [Range(0, 1)] public float sendInterval = 0.050f;
-        float lastClientSendTime;
-        float lastServerSendTime;
+        double lastClientSendTime;
+        double lastServerSendTime;
 
         // snapshot timestamps are _remote_ time
         // we need to interpolate and calculate buffer lifetimes based on it.
@@ -39,8 +39,9 @@ namespace Mirror
         // -> at any given time, we are interpolating from snapshot A to B
         // => seems like A.timestamp += deltaTime is a good way to do it
         // => let's store it in two variables:
-        float serverRemoteClientTime;
-        float clientRemoteServerTime;
+        // => DOUBLE for long term accuracy & batching gives us double anyway
+        double serverRemoteClientTime;
+        double clientRemoteServerTime;
 
         // "Experimentally I’ve found that the amount of delay that works best
         //  at 2-5% packet loss is 3X the packet send rate"
@@ -54,17 +55,17 @@ namespace Mirror
         // -> instead, we insert into a sorted buffer
         // -> the higher the buffer information density, the better
         // -> we still drop anything older than the first element in the buffer
-        SortedList<float, Snapshot> serverBuffer = new SortedList<float, Snapshot>();
-        SortedList<float, Snapshot> clientBuffer = new SortedList<float, Snapshot>();
+        SortedList<double, Snapshot> serverBuffer = new SortedList<double, Snapshot>();
+        SortedList<double, Snapshot> clientBuffer = new SortedList<double, Snapshot>();
 
         // absolute interpolation time, moved along with deltaTime
         // TODO might be possible to use only remoteTime - bufferTime later?
-        float serverInterpolationTime;
-        float clientInterpolationTime;
+        double serverInterpolationTime;
+        double clientInterpolationTime;
 
         // snapshot functions //////////////////////////////////////////////////
         // insert into snapshot buffer if newer than first entry
-        static void InsertIfNewEnough(Snapshot snapshot, SortedList<float, Snapshot> buffer)
+        static void InsertIfNewEnough(Snapshot snapshot, SortedList<double, Snapshot> buffer)
         {
             // drop it if it's older than the first snapshot
             if (buffer.Count > 0 &&
@@ -81,21 +82,25 @@ namespace Mirror
         // unclamped for maximum transition smoothness.
         // although the caller should switch to next snapshot if t >= 1 instead
         // of calling this with a t >= 1!
-        static Snapshot InterpolateSnapshot(Snapshot from, Snapshot to, float t)
+        static Snapshot InterpolateSnapshot(Snapshot from, Snapshot to, double t)
         {
+            // NOTE:
+            // Vector3 & Quaternion components are float anyway, so we can
+            // keep using the functions with 't' as float instead of double.
             return new Snapshot(
-                Mathf.LerpUnclamped(from.timestamp, to.timestamp, t),
-                Vector3.LerpUnclamped(from.transform.position, to.transform.position, t),
-                Quaternion.LerpUnclamped(from.transform.rotation, to.transform.rotation, t),
-                Vector3.LerpUnclamped(from.transform.scale, to.transform.scale, t)
+                Mathd.LerpUnclamped(from.timestamp, to.timestamp, t),
+                Vector3.LerpUnclamped(from.transform.position, to.transform.position, (float)t),
+                Quaternion.LerpUnclamped(from.transform.rotation, to.transform.rotation, (float)t),
+                Vector3.LerpUnclamped(from.transform.scale, to.transform.scale, (float)t)
             );
         }
 
         // construct a snapshot of the current state
         Snapshot ConstructSnapshot()
         {
+            // NetworkTime.localTime for double precision until Unity has it too
             return new Snapshot(
-                Time.time,
+                NetworkTime.localTime,
                 targetComponent.localPosition,
                 targetComponent.localRotation,
                 targetComponent.localScale
@@ -114,7 +119,7 @@ namespace Mirror
         // helper function to apply snapshots.
         // we use the same one on server and client.
         // => called every Update() depending on authority.
-        void ApplySnapshots(ref float remoteTime, ref float interpolationTime, SortedList<float, Snapshot> buffer)
+        void ApplySnapshots(ref double remoteTime, ref double interpolationTime, SortedList<double, Snapshot> buffer)
         {
             //Debug.Log($"{name} snapshotbuffer={buffer.Count}");
 
@@ -150,7 +155,7 @@ namespace Mirror
             }
 
             // move remote time along deltaTime
-            // TODO consider double for precision over days
+            // TODO we don't have Time.deltaTime double (yet). float delta is fine.
             // (probably need to speed this up based on buffer size later)
             remoteTime += Time.deltaTime;
 
@@ -163,7 +168,7 @@ namespace Mirror
                 // and they both need to be older than bufferTime
                 // (because we always buffer for 'bufferTime' seconds first)
                 // (second is always older than first. only check second's time)
-                float threshold = remoteTime - bufferTime;
+                double threshold = remoteTime - bufferTime;
                 if (second.timestamp <= threshold)
                 {
                     // we can't use remoteTime for interpolation because we always
@@ -172,10 +177,11 @@ namespace Mirror
                     // translating remoteTime - bufferTime into the past isn't exact.
                     // let's keep a separate interpolation time that is set when the
                     // interpolation starts
+                    // TODO we don't have Time.deltaTime double (yet). float delta is fine.
                     interpolationTime += Time.deltaTime;
 
                     // delta time is needed a lot
-                    float delta = second.timestamp - first.timestamp;
+                    double delta = second.timestamp - first.timestamp;
 
                     // if interpolation time is already >= delta, then remove
                     // the snapshot BEFORE we interpolate.
@@ -214,7 +220,7 @@ namespace Mirror
                     // TODO store 't' directly instead of all this magic. or not.
                     // IMPORTANT: this clamps. but we already handle overshoot
                     //            above
-                    float t = Mathf.InverseLerp(first.timestamp, second.timestamp, first.timestamp + interpolationTime);
+                    double t = Mathd.InverseLerp(first.timestamp, second.timestamp, first.timestamp + interpolationTime);
 
                     // TODO catchup
 
@@ -249,7 +255,7 @@ namespace Mirror
             {
                 // only player owned objects (with a connection) can send to
                 // server. we can get the timestamp from the connection.
-                float timestamp = (float)connectionToClient.remoteTimeStamp;
+                double timestamp = connectionToClient.remoteTimeStamp;
 
                 // construct snapshot with batch timestamp to save bandwidth
                 Snapshot snapshot = new Snapshot(
@@ -280,7 +286,7 @@ namespace Mirror
                 // not all of them have a connectionToServer.
                 // but all of them go through NetworkClient.connection.
                 // we can get the timestamp from there.
-                float timestamp = (float)NetworkClient.connection.remoteTimeStamp;
+                double timestamp = NetworkClient.connection.remoteTimeStamp;
 
                 // construct snapshot with batch timestamp to save bandwidth
                 Snapshot snapshot = new Snapshot(
@@ -303,7 +309,8 @@ namespace Mirror
             {
                 // broadcast to all clients each 'sendInterval'
                 // (client with authority will drop the rpc)
-                if (Time.time >= lastServerSendTime + sendInterval)
+                // NetworkTime.localTime for double precision until Unity has it too
+                if (NetworkTime.localTime >= lastServerSendTime + sendInterval)
                 {
                     Snapshot snapshot = ConstructSnapshot();
 
@@ -314,7 +321,7 @@ namespace Mirror
                     else
                         RpcServerToClientSync_Unreliable(snapshot.transform);
 
-                    lastServerSendTime = Time.time;
+                    lastServerSendTime = NetworkTime.localTime;
                 }
 
                 // apply buffered snapshots IF client authority
@@ -337,7 +344,8 @@ namespace Mirror
                 if (IsClientWithAuthority)
                 {
                     // send to server each 'sendInterval'
-                    if (Time.time >= lastClientSendTime + sendInterval)
+                    // NetworkTime.localTime for double precision until Unity has it too
+                    if (NetworkTime.localTime >= lastClientSendTime + sendInterval)
                     {
                         Snapshot snapshot = ConstructSnapshot();
 
@@ -348,7 +356,7 @@ namespace Mirror
                         else
                             CmdClientToServerSync_Unreliable(snapshot.transform);
 
-                        lastClientSendTime = Time.time;
+                        lastClientSendTime = NetworkTime.localTime;
                     }
                 }
                 // for all other clients (and for local player if !authority),

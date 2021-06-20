@@ -35,14 +35,14 @@ namespace Mirror
         //       remote time (sequence * sendInterval). but Unity's update is
         //       not guaranteed to run on the exact intervals / do catchup.
         //       => remote timestamp is better for now
-        // TODO consider double for precision over days
         //
         // [REMOTE TIME, NOT LOCAL TIME]
-        public float timestamp;
+        // => DOUBLE for long term accuracy & batching gives us double anyway
+        public double timestamp;
 
         public SnapshotTransform transform;
 
-        public Snapshot(float timestamp, Vector3 position, Quaternion rotation, Vector3 scale)
+        public Snapshot(double timestamp, Vector3 position, Quaternion rotation, Vector3 scale)
         {
             this.timestamp = timestamp;
             this.transform = new SnapshotTransform(position, rotation, scale);
