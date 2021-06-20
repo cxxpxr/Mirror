@@ -148,7 +148,7 @@ namespace Mirror
                 {
                     Snapshot first = buffer.Values[0];
                     remoteTime = first.timestamp;
-                    Debug.LogWarning("remoteTime initialized to " + first.timestamp);
+                    Debug.Log("remoteTime initialized to " + first.timestamp);
                 }
                 // otherwise wait for the first one
                 else return;
