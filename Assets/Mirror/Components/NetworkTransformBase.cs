@@ -3,7 +3,6 @@
 // Base class for NetworkTransform and NetworkTransformChild.
 // => simple unreliable sync without any interpolation for now.
 // => which means we don't need teleport detection either
-
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -62,6 +61,9 @@ namespace Mirror
         // TODO might be possible to use only remoteTime - bufferTime later?
         double serverInterpolationTime;
         double clientInterpolationTime;
+
+        [Header("Debug")]
+        public bool showGizmos;
 
         // snapshot functions //////////////////////////////////////////////////
         // insert into snapshot buffer if newer than first entry
@@ -383,5 +385,57 @@ namespace Mirror
 
         void OnDisable() => Reset();
         void OnEnable() => Reset();
+
+        // draw gizmos for debugging
+        void DrawGizmos(SortedList<double, Snapshot> buffer)
+        {
+            // draw start if we have at least two entries
+            if (buffer.Count >= 2)
+            {
+                // start: transparent white
+                Snapshot start = buffer.Values[0];
+                Gizmos.color = new Color(1, 1, 1, 0.5f);
+                Gizmos.DrawCube(start.transform.position, Vector3.one);
+
+                // line: start to position
+                Gizmos.DrawLine(start.transform.position, transform.position);
+
+                // goal: transparent green
+                Snapshot goal = buffer.Values[1];
+                Gizmos.color = new Color(0, 1, 0, 0.5f);
+                Gizmos.DrawCube(goal.transform.position, Vector3.one);
+
+                // line: position to goal
+                Gizmos.DrawLine(transform.position, goal.transform.position);
+
+                // draw the whole buffer for easier debugging.
+                // it's worth seeing how much we have buffered ahead already
+                for (int i = 2; i < buffer.Count; ++i)
+                {
+                    // transparent gray
+                    Snapshot entry = buffer.Values[i];
+                    Gizmos.color = new Color(0.5f, 0.5f, 0.5f, 0.3f);
+                    Gizmos.DrawCube(entry.transform.position, Vector3.one);
+                }
+            }
+        }
+
+        void OnDrawGizmos()
+        {
+            if (!showGizmos) return;
+
+            if (isServer)
+                DrawGizmos(serverBuffer);
+
+            if (isClient)
+                DrawGizmos(clientBuffer);
+
+            // TODO what about host mode?
+            // TODO what about authority?
+
+            // we only interpolate if we DON'T have authority.
+            // if we have authority, what we see is the true position.
+
+        }
     }
 }
