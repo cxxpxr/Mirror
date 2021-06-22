@@ -421,9 +421,7 @@ namespace Mirror
                 {
                     GUI.color = overlayColor;
                     GUILayout.BeginArea(new Rect(point.x, Screen.height - point.y, 160, 100));
-                    GUILayout.Label("NT");
-                    GUILayout.Label("serverBuffer=" + serverBuffer.Count);
-                    GUILayout.Label("clientBuffer=" + clientBuffer.Count);
+                    GUILayout.Label($"NT SB:{serverBuffer.Count} CB:{clientBuffer.Count}");
                     GUILayout.EndArea();
                     GUI.color = Color.white;
                 }
