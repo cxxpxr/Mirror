@@ -466,18 +466,8 @@ namespace Mirror
         {
             if (!showGizmos) return;
 
-            if (isServer)
-                DrawGizmos(serverBuffer);
-
-            if (isClient)
-                DrawGizmos(clientBuffer);
-
-            // TODO what about host mode?
-            // TODO what about authority?
-
-            // we only interpolate if we DON'T have authority.
-            // if we have authority, what we see is the true position.
-
+            if (isServer) DrawGizmos(serverBuffer);
+            if (isClient) DrawGizmos(clientBuffer);
         }
     }
 }
