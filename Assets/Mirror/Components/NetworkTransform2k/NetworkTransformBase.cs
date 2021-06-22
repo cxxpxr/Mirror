@@ -371,6 +371,7 @@ namespace Mirror
         void OnDisable() => Reset();
         void OnEnable() => Reset();
 
+        // debug ///////////////////////////////////////////////////////////////
         void OnGUI()
         {
             if (!showOverlay) return;
@@ -395,7 +396,6 @@ namespace Mirror
             }
         }
 
-        // draw gizmos for debugging
         void DrawGizmos(SortedList<double, Snapshot> buffer)
         {
             // draw start if we have at least two entries
