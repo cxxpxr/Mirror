@@ -25,7 +25,7 @@ namespace Mirror
         // unclamped for maximum transition smoothness.
         // although the caller should switch to next snapshot if t >= 1 instead
         // of calling this with a t >= 1!
-        public static Snapshot InterpolateSnapshot(Snapshot from, Snapshot to, double t)
+        public static Snapshot Interpolate(Snapshot from, Snapshot to, double t)
         {
             // NOTE:
             // Vector3 & Quaternion components are float anyway, so we can

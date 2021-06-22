@@ -48,7 +48,7 @@ namespace Mirror.Tests.NetworkTransform2k
         }
 
         [Test]
-        public void InterpolateSnapshot()
+        public void Interpolate()
         {
             Snapshot from = new Snapshot(
                 1,
@@ -65,7 +65,7 @@ namespace Mirror.Tests.NetworkTransform2k
             );
 
             // interpolate
-            Snapshot between = SnapshotUtils.InterpolateSnapshot(from, to, 0.5);
+            Snapshot between = SnapshotUtils.Interpolate(from, to, 0.5);
 
             // check time
             Assert.That(between.timestamp, Is.EqualTo(1.5).Within(Mathf.Epsilon));

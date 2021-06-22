@@ -202,7 +202,7 @@ namespace Mirror
                     //Debug.Log($"{name} first={first.timestamp:F2} second={second.timestamp:F2} remoteTime={remoteTime:F2} interpolationTime={interpolationTime:F2} t={t:F2} snapshotbuffer={buffer.Count}");
 
                     // interpolate snapshot
-                    Snapshot interpolated = SnapshotUtils.InterpolateSnapshot(first, second, t);
+                    Snapshot interpolated = SnapshotUtils.Interpolate(first, second, t);
 
                     // apply snapshot
                     ApplySnapshot(interpolated);
