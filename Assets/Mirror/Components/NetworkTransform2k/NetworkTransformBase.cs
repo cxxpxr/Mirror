@@ -285,71 +285,75 @@ namespace Mirror
         }
 
         // update //////////////////////////////////////////////////////////////
-        void Update()
+        void UpdateServer()
         {
-            // if server then always sync to others.
-            if (isServer)
+            // broadcast to all clients each 'sendInterval'
+            // (client with authority will drop the rpc)
+            // NetworkTime.localTime for double precision until Unity has it too
+            if (NetworkTime.localTime >= lastServerSendTime + sendInterval)
             {
-                // broadcast to all clients each 'sendInterval'
-                // (client with authority will drop the rpc)
+                Snapshot snapshot = ConstructSnapshot();
+
+                // send snapshot without timestamp.
+                // receiver gets it from batch timestamp to save bandwidth.
+                if (channelId == Channels.Reliable)
+                    RpcServerToClientSync_Reliable(snapshot.transform);
+                else
+                    RpcServerToClientSync_Unreliable(snapshot.transform);
+
+                lastServerSendTime = NetworkTime.localTime;
+            }
+
+            // apply buffered snapshots IF client authority
+            // -> in server authority, server moves the object
+            //    so no need to apply any snapshots there.
+            // -> don't apply for host mode player either, even if in
+            //    client authority mode. if it doesn't go over the network,
+            //    then we don't need to do anything.
+            if (clientAuthority && !isLocalPlayer)
+            {
+                // apply snapshots
+                ApplySnapshots(ref serverRemoteClientTime, ref serverInterpolationTime, serverBuffer);
+            }
+        }
+
+        void UpdateClient()
+        {
+            // client authority, and local player (= allowed to move myself)?
+            if (IsClientWithAuthority)
+            {
+                // send to server each 'sendInterval'
                 // NetworkTime.localTime for double precision until Unity has it too
-                if (NetworkTime.localTime >= lastServerSendTime + sendInterval)
+                if (NetworkTime.localTime >= lastClientSendTime + sendInterval)
                 {
                     Snapshot snapshot = ConstructSnapshot();
 
                     // send snapshot without timestamp.
                     // receiver gets it from batch timestamp to save bandwidth.
                     if (channelId == Channels.Reliable)
-                        RpcServerToClientSync_Reliable(snapshot.transform);
+                        CmdClientToServerSync_Reliable(snapshot.transform);
                     else
-                        RpcServerToClientSync_Unreliable(snapshot.transform);
+                        CmdClientToServerSync_Unreliable(snapshot.transform);
 
-                    lastServerSendTime = NetworkTime.localTime;
-                }
-
-                // apply buffered snapshots IF client authority
-                // -> in server authority, server moves the object
-                //    so no need to apply any snapshots there.
-                // -> don't apply for host mode player either, even if in
-                //    client authority mode. if it doesn't go over the network,
-                //    then we don't need to do anything.
-                if (clientAuthority && !isLocalPlayer)
-                {
-                    // apply snapshots
-                    ApplySnapshots(ref serverRemoteClientTime, ref serverInterpolationTime, serverBuffer);
+                    lastClientSendTime = NetworkTime.localTime;
                 }
             }
+            // for all other clients (and for local player if !authority),
+            // we need to apply snapshots from the buffer
+            else
+            {
+                // apply snapshots
+                ApplySnapshots(ref clientRemoteServerTime, ref clientInterpolationTime, clientBuffer);
+            }
+        }
+
+        void Update()
+        {
+            // if server then always sync to others.
+            if (isServer) UpdateServer();
             // 'else if' because host mode shouldn't send anything to server.
             // it is the server. don't overwrite anything there.
-            else if (isClient)
-            {
-                // client authority, and local player (= allowed to move myself)?
-                if (IsClientWithAuthority)
-                {
-                    // send to server each 'sendInterval'
-                    // NetworkTime.localTime for double precision until Unity has it too
-                    if (NetworkTime.localTime >= lastClientSendTime + sendInterval)
-                    {
-                        Snapshot snapshot = ConstructSnapshot();
-
-                        // send snapshot without timestamp.
-                        // receiver gets it from batch timestamp to save bandwidth.
-                        if (channelId == Channels.Reliable)
-                            CmdClientToServerSync_Reliable(snapshot.transform);
-                        else
-                            CmdClientToServerSync_Unreliable(snapshot.transform);
-
-                        lastClientSendTime = NetworkTime.localTime;
-                    }
-                }
-                // for all other clients (and for local player if !authority),
-                // we need to apply snapshots from the buffer
-                else
-                {
-                    // apply snapshots
-                    ApplySnapshots(ref clientRemoteServerTime, ref clientInterpolationTime, clientBuffer);
-                }
-            }
+            else if (isClient) UpdateClient();
         }
 
         void Reset()
