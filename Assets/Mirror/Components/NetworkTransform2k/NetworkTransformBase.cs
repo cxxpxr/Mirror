@@ -397,13 +397,6 @@ namespace Mirror
         void OnDisable() => Reset();
         void OnEnable() => Reset();
 
-        // is a 2D point in screen?
-        public static bool IsPointInScreen(Vector2 point)
-        {
-            return 0 <= point.x && point.x <= Screen.width &&
-                   0 <= point.y && point.y <= Screen.height;
-        }
-
         void OnGUI()
         {
             if (!showOverlay) return;
@@ -417,7 +410,7 @@ namespace Mirror
                 Vector3 point = Camera.main.WorldToScreenPoint(transform.position);
 
                 // enough alpha, in front of camera and in screen?
-                if (point.z >= 0 && IsPointInScreen(point))
+                if (point.z >= 0 && Utils.IsPointInScreen(point))
                 {
                     GUI.color = overlayColor;
                     GUILayout.BeginArea(new Rect(point.x, Screen.height - point.y, 160, 100));

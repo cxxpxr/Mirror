@@ -122,5 +122,10 @@ namespace Mirror
             }
             return true;
         }
+
+        // is a 2D point in screen? (from ummorpg)
+        public static bool IsPointInScreen(Vector2 point) =>
+            0 <= point.x && point.x <= Screen.width &&
+            0 <= point.y && point.y <= Screen.height;
     }
 }
