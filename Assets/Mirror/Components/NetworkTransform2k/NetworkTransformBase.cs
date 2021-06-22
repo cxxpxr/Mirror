@@ -213,7 +213,7 @@ namespace Mirror
             }
         }
 
-        // remote calls ////////////////////////////////////////////////////////
+        // cmd /////////////////////////////////////////////////////////////////
         // Cmds for both channels depending on configuration
         // => only send position/rotation/scale.
         //    use timestamp from batch to save bandwidth.
@@ -245,6 +245,7 @@ namespace Mirror
             }
         }
 
+        // rpc /////////////////////////////////////////////////////////////////
         // Rpcs for both channels depending on configuration
         [ClientRpc(channel = Channels.Reliable)]
         void RpcServerToClientSync_Reliable(SnapshotTransform snapshotTransform) => OnServerToClientSync(snapshotTransform);
