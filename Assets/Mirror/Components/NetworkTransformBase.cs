@@ -64,6 +64,8 @@ namespace Mirror
 
         [Header("Debug")]
         public bool showGizmos;
+        public bool showOverlay;
+        public Color overlayColor = new Color(0, 0, 0, 0.5f);
 
         // snapshot functions //////////////////////////////////////////////////
         // insert into snapshot buffer if newer than first entry
@@ -385,6 +387,40 @@ namespace Mirror
 
         void OnDisable() => Reset();
         void OnEnable() => Reset();
+
+
+        // is a 2D point in screen?
+        public static bool IsPointInScreen(Vector2 point)
+        {
+            return 0 <= point.x && point.x <= Screen.width &&
+                   0 <= point.y && point.y <= Screen.height;
+        }
+
+        void OnGUI()
+        {
+            if (!showOverlay) return;
+
+            // show data next to player for easier debugging. this is very useful!
+            // IMPORTANT: this is basically an ESP hack for shooter games.
+            //            DO NOT make this available with a hotkey in release builds
+            if (Debug.isDebugBuild)
+            {
+                // project position to screen
+                Vector3 point = Camera.main.WorldToScreenPoint(transform.position);
+
+                // enough alpha, in front of camera and in screen?
+                if (point.z >= 0 && IsPointInScreen(point))
+                {
+                    GUI.color = overlayColor;
+                    GUILayout.BeginArea(new Rect(point.x, Screen.height - point.y, 160, 100));
+                    GUILayout.Label("NT");
+                    GUILayout.Label("serverBuffer=" + serverBuffer.Count);
+                    GUILayout.Label("clientBuffer=" + clientBuffer.Count);
+                    GUILayout.EndArea();
+                    GUI.color = Color.white;
+                }
+            }
+        }
 
         // draw gizmos for debugging
         void DrawGizmos(SortedList<double, Snapshot> buffer)
