@@ -284,6 +284,14 @@ namespace Mirror
         // server broadcasts sync message to all clients
         void OnServerToClientSync(SnapshotTransform snapshotTransform)
         {
+            // on host mode, the host server sends rpcs to all clients.
+            // the host client itself will receive one of the rpcs too.
+            // -> we don't want to add to a host monster's clientBuffer
+            // -> only if the entity is another client with client->server sync
+            bool clientToServerSync = clientAuthority;
+            bool isHost = isServer && isClient;
+            if (isHost && !clientToServerSync) return;
+
             // apply for all objects except local player with authority
             if (!IsClientWithAuthority)
             {
