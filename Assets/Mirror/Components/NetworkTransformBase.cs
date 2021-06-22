@@ -397,7 +397,6 @@ namespace Mirror
         void OnDisable() => Reset();
         void OnEnable() => Reset();
 
-
         // is a 2D point in screen?
         public static bool IsPointInScreen(Vector2 point)
         {
