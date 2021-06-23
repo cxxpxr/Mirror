@@ -18,5 +18,11 @@ namespace Mirror
         /// <summary>Calculates the linear parameter t that produces the interpolant value within the range [a, b].</summary>
         public static double InverseLerp(double a, double b, double value) =>
             a != b ? Clamp01((value - a) / (b - a)) : 0;
+
+        /// <summary>Calculates the linear parameter t that produces the interpolant value within the range [a, b].</summary>
+        // InverseLerp clamps t between [0,1] and never extrapolates.
+        // this version extrapolates.
+        public static double InverseLerpUnclamped(double a, double b, double value) =>
+            a != b ? ((value - a) / (b - a)) : 0;
     }
 }

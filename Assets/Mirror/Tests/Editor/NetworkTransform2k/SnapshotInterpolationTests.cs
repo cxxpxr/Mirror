@@ -295,5 +295,57 @@ namespace Mirror.Tests.NetworkTransform2k
             Assert.That(computed.transform.scale.y, Is.EqualTo(3.5).Within(Mathf.Epsilon));
             Assert.That(computed.transform.scale.z, Is.EqualTo(3.5).Within(Mathf.Epsilon));
         }
+
+        // fifth step: interpolation time overshoots the end
+        //             => test without additional snapshots first
+        [Test]
+        public void Compute_Step5_ExtrapolateWithoutMoreSnapshots()
+        {
+            // with remoteTime = 2.5 and delta of 0.5,
+            // compute sets remoteTime = 3.
+            // bufferTime = 2.
+            // so the threshold is bufferTime-remoteTime = 1.
+            // => everything has to be older than 1 (aka <= 1)
+            // => first at '0' is old enough
+            // => second at '1' is _exactly_ old enough via <=
+            Snapshot first = new Snapshot(0, new Vector3(1, 1, 1), Quaternion.Euler(new Vector3(0, 0, 0)), new Vector3(3, 3, 3));
+            Snapshot second = new Snapshot(1, new Vector3(2, 2, 2), Quaternion.Euler(new Vector3(0, 60, 0)), new Vector3(4, 4, 4));
+            buffer.Add(first.timestamp, first);
+            buffer.Add(second.timestamp, second);
+
+            // compute with initialized remoteTime and buffer time of 2 seconds
+            // and a delta time to be sure that we move along it no matter what.
+            // -> interpolation time is already at '1' at the end.
+            // -> compute will add 0.5 deltaTime
+            // -> so we should overshoot aka extrapolate between first & second
+            float bufferTime = 2;
+            double deltaTime = 0.5;
+            double remoteTime = 2.5;
+            double interpolationTime = 1;
+            bool result = SnapshotInterpolation.Compute(bufferTime, deltaTime, ref remoteTime, ref interpolationTime, buffer, out Snapshot computed);
+
+            // should spit out the interpolated snapshot
+            Assert.That(result, Is.True);
+            // remote time should be moved along deltaTime
+            Assert.That(remoteTime, Is.EqualTo(2.5 + 0.5));
+            // interpolation started just now, from 0.
+            // and deltaTime is 0.5, so we should be at 0.5 now.
+            Assert.That(interpolationTime, Is.EqualTo(1.5));
+            // buffer should be untouched, we are still interpolating between the two
+            Assert.That(buffer.Count, Is.EqualTo(2));
+            // computed snapshot should be extrapolated by one and a half
+            // check position
+            Assert.That(computed.transform.position.x, Is.EqualTo(2.5).Within(Mathf.Epsilon));
+            Assert.That(computed.transform.position.y, Is.EqualTo(2.5).Within(Mathf.Epsilon));
+            Assert.That(computed.transform.position.z, Is.EqualTo(2.5).Within(Mathf.Epsilon));
+            // check rotation
+            Assert.That(computed.transform.rotation.eulerAngles.x, Is.EqualTo(0).Within(Mathf.Epsilon));
+            Assert.That(computed.transform.rotation.eulerAngles.y, Is.EqualTo(90).Within(Mathf.Epsilon));
+            Assert.That(computed.transform.rotation.eulerAngles.z, Is.EqualTo(0).Within(Mathf.Epsilon));
+            // check scale
+            Assert.That(computed.transform.scale.x, Is.EqualTo(4.5).Within(Mathf.Epsilon));
+            Assert.That(computed.transform.scale.y, Is.EqualTo(4.5).Within(Mathf.Epsilon));
+            Assert.That(computed.transform.scale.z, Is.EqualTo(4.5).Within(Mathf.Epsilon));
+        }
     }
 }
