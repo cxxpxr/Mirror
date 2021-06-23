@@ -91,5 +91,52 @@ namespace Mirror.Tests.NetworkTransform2k
             Assert.That(between.transform.scale.y, Is.EqualTo(3.5).Within(Mathf.Epsilon));
             Assert.That(between.transform.scale.z, Is.EqualTo(3.5).Within(Mathf.Epsilon));
         }
+
+        // first step: with empty buffer and defaults, nothing should happen
+        [Test]
+        public void Compute_DefaultsDoesNothing()
+        {
+            // compute with defaults
+            float bufferTime = 0;
+            double deltaTime = 0;
+            double remoteTime = 0;
+            double interpolationTime = 0;
+            bool result = SnapshotInterpolation.Compute(bufferTime, deltaTime, ref remoteTime, ref interpolationTime, buffer, out Snapshot computed);
+
+            // should not spit out any snapshot to apply
+            Assert.That(result, Is.False);
+            // parameters should all be untouched
+            Assert.That(remoteTime, Is.EqualTo(0));
+            // no interpolation should have happened yet
+            Assert.That(interpolationTime, Is.EqualTo(0));
+            // buffer should still be untouched
+            Assert.That(buffer.Count, Is.EqualTo(0));
+        }
+
+        // second step: compute is supposed to initialize remote time as soon as
+        //             the first buffer entry arrived
+        [Test]
+        public void Compute_FirstSnapshotInitializesRemoteTime()
+        {
+            // add first snapshot
+            Snapshot first = new Snapshot(1, Vector3.zero, Quaternion.identity, Vector3.one);
+            buffer.Add(first.timestamp, first);
+
+            // compute with defaults except for a deltaTime
+            float bufferTime = 0;
+            double deltaTime = 0.5;
+            double remoteTime = 0;
+            double interpolationTime = 0;
+            bool result = SnapshotInterpolation.Compute(bufferTime, deltaTime, ref remoteTime, ref interpolationTime, buffer, out Snapshot computed);
+
+            // should not spit out any snapshot to apply
+            Assert.That(result, Is.False);
+            // remote time be initialize to first and moved along deltaTime
+            Assert.That(remoteTime, Is.EqualTo(first.timestamp + deltaTime));
+            // no interpolation should have happened yet
+            Assert.That(interpolationTime, Is.EqualTo(0));
+            // buffer should be untouched
+            Assert.That(buffer.Count, Is.EqualTo(1));
+        }
     }
 }
