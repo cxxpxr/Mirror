@@ -224,7 +224,7 @@ namespace Mirror.Tests.NetworkTransform2k
         //             are older than the time we buffer ('bufferTime')
         //             => test for only one snapshot which is old enough
         [Test]
-        public void Compute_Step3_WaitsUntilTwoOldEnoughSnapshot()
+        public void Compute_Step3_WaitsUntilTwoOldEnoughSnapshots()
         {
             // add a snapshot at t=0
             Snapshot first = new Snapshot(0, Vector3.zero, Quaternion.identity, Vector3.one);
