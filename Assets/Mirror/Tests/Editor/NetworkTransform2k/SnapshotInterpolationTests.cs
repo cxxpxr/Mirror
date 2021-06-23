@@ -250,7 +250,7 @@ namespace Mirror.Tests.NetworkTransform2k
 
         // fourth step: compute should begin if we have two old enough snapshots
         [Test]
-        public void Compute_Step4_InterpolateBetweenTwoOldEnoughSnapshots()
+        public void Compute_Step4_InterpolateWithTwoOldEnoughSnapshots()
         {
             // with remoteTime = 2.5 and delta of 0.5,
             // compute sets remoteTime = 3.
