@@ -138,5 +138,33 @@ namespace Mirror.Tests.NetworkTransform2k
             // buffer should be untouched
             Assert.That(buffer.Count, Is.EqualTo(1));
         }
+
+        // third step: compute should always wait until the first two snapshots
+        //             are older than the time we buffer ('bufferTime')
+        [Test]
+        public void Compute_WaitsUntilBufferTime()
+        {
+            // add two snapshots which are exactly 1s and 2s after remoteTime
+            Snapshot first = new Snapshot(3, Vector3.zero, Quaternion.identity, Vector3.one);
+            Snapshot second = new Snapshot(4, Vector3.zero, Quaternion.identity, Vector3.one);
+            buffer.Add(first.timestamp, first);
+            buffer.Add(second.timestamp, second);
+
+            // compute with initialized remoteTime and buffer time of 2 seconds
+            float bufferTime = 2;
+            double deltaTime = 0;
+            double remoteTime = 1;
+            double interpolationTime = 0;
+            bool result = SnapshotInterpolation.Compute(bufferTime, deltaTime, ref remoteTime, ref interpolationTime, buffer, out Snapshot computed);
+
+            // should not spit out any snapshot to apply
+            Assert.That(result, Is.False);
+            // remote time should be untouched because delta is 0
+            Assert.That(remoteTime, Is.EqualTo(1));
+            // no interpolation should happen yet (not old enough)
+            Assert.That(interpolationTime, Is.EqualTo(0));
+            // buffer should be untouched
+            Assert.That(buffer.Count, Is.EqualTo(2));
+        }
     }
 }
