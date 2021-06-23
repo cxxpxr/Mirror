@@ -94,7 +94,7 @@ namespace Mirror.Tests.NetworkTransform2k
 
         // first step: with empty buffer and defaults, nothing should happen
         [Test]
-        public void Compute_Step1_DefaultsDoesNothing()
+        public void Compute_Step1_DefaultDoesNothing()
         {
             // compute with defaults
             float bufferTime = 0;
