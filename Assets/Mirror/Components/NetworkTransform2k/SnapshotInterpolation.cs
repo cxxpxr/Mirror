@@ -1,11 +1,14 @@
-// snapshot interpolation helper functions.
-// static for easy testing.
+// snapshot interpolation algorithms only,
+// independent from Unity/NetworkTransform/MonoBehaviour/Mirror/etc.
+// the goal is to remove all the magic from it.
+// => a standalone snapshot interpolation algorithm
+// => that can be simulated with unit tests easily
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Mirror
 {
-    public static class SnapshotUtils
+    public static class SnapshotInterpolation
     {
         // insert into snapshot buffer if newer than first entry
         public static void InsertIfNewEnough(Snapshot snapshot, SortedList<double, Snapshot> buffer)

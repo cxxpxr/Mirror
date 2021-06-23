@@ -202,7 +202,7 @@ namespace Mirror
                     //Debug.Log($"{name} first={first.timestamp:F2} second={second.timestamp:F2} remoteTime={remoteTime:F2} interpolationTime={interpolationTime:F2} t={t:F2} snapshotbuffer={buffer.Count}");
 
                     // interpolate snapshot
-                    Snapshot interpolated = SnapshotUtils.Interpolate(first, second, t);
+                    Snapshot interpolated = SnapshotInterpolation.Interpolate(first, second, t);
 
                     // apply snapshot
                     ApplySnapshot(interpolated);
@@ -241,7 +241,7 @@ namespace Mirror
                 );
 
                 // add to buffer (or drop if older than first element)
-                SnapshotUtils.InsertIfNewEnough(snapshot, serverBuffer);
+                SnapshotInterpolation.InsertIfNewEnough(snapshot, serverBuffer);
             }
         }
 
@@ -281,7 +281,7 @@ namespace Mirror
                 );
 
                 // add to buffer (or drop if older than first element)
-                SnapshotUtils.InsertIfNewEnough(snapshot, clientBuffer);
+                SnapshotInterpolation.InsertIfNewEnough(snapshot, clientBuffer);
             }
         }
 
