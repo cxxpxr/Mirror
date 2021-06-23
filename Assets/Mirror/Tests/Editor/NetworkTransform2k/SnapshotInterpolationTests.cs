@@ -172,5 +172,33 @@ namespace Mirror.Tests.NetworkTransform2k
             // buffer should be untouched
             Assert.That(buffer.Count, Is.EqualTo(2));
         }
+
+        // fourth step: compute should begin if we have two old enough snapshots
+        // BUT: let's make sure it doesn't do anything for ONE old enough
+        //      snapshot first.
+        [Test]
+        public void Compute_Step4_OnlyOneOldEnoughSnapshot()
+        {
+            // add a snapshot at t=0
+            Snapshot first = new Snapshot(0, Vector3.zero, Quaternion.identity, Vector3.one);
+            buffer.Add(first.timestamp, first);
+
+            // compute at remoteTime = 2 with bufferTime = 1
+            // so the threshold is anything < t=1
+            float bufferTime = 1;
+            double deltaTime = 0;
+            double remoteTime = 2;
+            double interpolationTime = 0;
+            bool result = SnapshotInterpolation.Compute(bufferTime, deltaTime, ref remoteTime, ref interpolationTime, buffer, out Snapshot computed);
+
+            // should not spit out any snapshot to apply
+            Assert.That(result, Is.False);
+            // remoteTime should be same as before. deltaTime is 0.
+            Assert.That(remoteTime, Is.EqualTo(2));
+            // no interpolation should happen yet (not enough snapshots)
+            Assert.That(interpolationTime, Is.EqualTo(0));
+            // buffer should be untouched
+            Assert.That(buffer.Count, Is.EqualTo(1));
+        }
     }
 }
