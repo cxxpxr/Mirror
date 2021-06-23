@@ -141,6 +141,7 @@ namespace Mirror.Tests.NetworkTransform2k
 
         // third step: compute should always wait until the first two snapshots
         //             are older than the time we buffer ('bufferTime')
+        //             => test for both snapshots not old enough
         [Test]
         public void Compute_Step3_WaitsUntilBufferTime()
         {
@@ -173,11 +174,11 @@ namespace Mirror.Tests.NetworkTransform2k
             Assert.That(buffer.Count, Is.EqualTo(2));
         }
 
-        // fourth step: compute should begin if we have two old enough snapshots
-        // BUT: let's make sure it doesn't do anything for ONE old enough
-        //      snapshot first.
+        // third step: compute should always wait until the first two snapshots
+        //             are older than the time we buffer ('bufferTime')
+        //             => test for only one snapshot which is old enough
         [Test]
-        public void Compute_Step4_OnlyOneOldEnoughSnapshot()
+        public void Compute_Step3_WaitsUntilTwoOldEnoughSnapshot()
         {
             // add a snapshot at t=0
             Snapshot first = new Snapshot(0, Vector3.zero, Quaternion.identity, Vector3.one);
