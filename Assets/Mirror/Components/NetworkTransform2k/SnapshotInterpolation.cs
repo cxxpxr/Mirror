@@ -64,8 +64,6 @@ namespace Mirror
             SortedList<double, Snapshot> buffer,
             out Snapshot computed)
         {
-            //Debug.Log($"{name} snapshotbuffer={buffer.Count}");
-
             // we buffer snapshots for 'bufferTime'
             // for example:
             //   * we buffer for 3 x sendInterval = 300ms
@@ -84,6 +82,7 @@ namespace Mirror
             // => seems like A.timestamp += deltaTime is a good way to do it
 
             computed = default;
+            //Debug.Log($"{name} snapshotbuffer={buffer.Count}");
 
             // if remote time wasn't initialized yet
             if (remoteTime == 0)
