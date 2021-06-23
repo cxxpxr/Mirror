@@ -110,8 +110,11 @@ namespace Mirror
 
                 // and they both need to be older than bufferTime
                 // (because we always buffer for 'bufferTime' seconds first)
-                // (second is always older than first. only check second's time)
+                // => first is always older than second
+                // => only check if second is old enough
+                // => by definition, first is older anyway
                 double threshold = remoteTime - bufferTime;
+                //Debug.Log($"second timestamp={second.timestamp} threshold={threshold} because remoteTime={remoteTime} - bufferTime={bufferTime}");
                 if (second.timestamp <= threshold)
                 {
                     // we can't use remoteTime for interpolation because we always
