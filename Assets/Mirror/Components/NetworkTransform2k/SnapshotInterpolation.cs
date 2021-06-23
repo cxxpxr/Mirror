@@ -56,7 +56,13 @@ namespace Mirror
         // returns
         //   'true' if it spit out a snapshot to apply.
         //   'false' means computation moved along, but nothing to apply.
-        public static bool Compute(double bufferTime, double deltaTime, ref double remoteTime, ref double interpolationTime, SortedList<double, Snapshot> buffer, out Snapshot computed)
+        public static bool Compute(
+            double bufferTime,
+            double deltaTime,
+            ref double remoteTime,
+            ref double interpolationTime,
+            SortedList<double, Snapshot> buffer,
+            out Snapshot computed)
         {
             //Debug.Log($"{name} snapshotbuffer={buffer.Count}");
 
