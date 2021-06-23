@@ -144,23 +144,29 @@ namespace Mirror.Tests.NetworkTransform2k
         [Test]
         public void Compute_Step3_WaitsUntilBufferTime()
         {
-            // add two snapshots which are exactly 1s and 2s after remoteTime
-            Snapshot first = new Snapshot(3, Vector3.zero, Quaternion.identity, Vector3.one);
-            Snapshot second = new Snapshot(4, Vector3.zero, Quaternion.identity, Vector3.one);
+            // with remoteTime = 2.5 and delta of 0.5,
+            // compute sets remoteTime = 3.
+            // bufferTime = 2.
+            // so the threshold is bufferTime-remoteTime = 1.
+            // => everything has to be older than 1 (aka <= 1)
+            // => our buffers are 0.1 and 1.1, so not old enough just yet.
+            Snapshot first = new Snapshot(0.1, Vector3.zero, Quaternion.identity, Vector3.one);
+            Snapshot second = new Snapshot(1.1, Vector3.zero, Quaternion.identity, Vector3.one);
             buffer.Add(first.timestamp, first);
             buffer.Add(second.timestamp, second);
 
             // compute with initialized remoteTime and buffer time of 2 seconds
+            // and a delta time to be sure that we move along it no matter what.
             float bufferTime = 2;
-            double deltaTime = 0;
-            double remoteTime = 1;
+            double deltaTime = 0.5;
+            double remoteTime = 2.5;
             double interpolationTime = 0;
             bool result = SnapshotInterpolation.Compute(bufferTime, deltaTime, ref remoteTime, ref interpolationTime, buffer, out Snapshot computed);
 
             // should not spit out any snapshot to apply
             Assert.That(result, Is.False);
-            // remote time should be untouched because delta is 0
-            Assert.That(remoteTime, Is.EqualTo(1));
+            // remote time should be moved along deltaTime
+            Assert.That(remoteTime, Is.EqualTo(2.5 + 0.5));
             // no interpolation should happen yet (not old enough)
             Assert.That(interpolationTime, Is.EqualTo(0));
             // buffer should be untouched
