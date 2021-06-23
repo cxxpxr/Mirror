@@ -125,7 +125,7 @@ namespace Mirror
                     // interpolation starts
                     interpolationTime += deltaTime;
 
-                    // delta time is needed a lot
+                    // delta is needed a lot
                     double delta = second.timestamp - first.timestamp;
 
                     // if interpolation time is already >= delta, then remove
