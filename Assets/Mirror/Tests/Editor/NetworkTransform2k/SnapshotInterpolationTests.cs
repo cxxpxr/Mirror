@@ -94,7 +94,7 @@ namespace Mirror.Tests.NetworkTransform2k
 
         // first step: with empty buffer and defaults, nothing should happen
         [Test]
-        public void Compute_DefaultsDoesNothing()
+        public void Compute_Step1_DefaultsDoesNothing()
         {
             // compute with defaults
             float bufferTime = 0;
@@ -116,7 +116,7 @@ namespace Mirror.Tests.NetworkTransform2k
         // second step: compute is supposed to initialize remote time as soon as
         //             the first buffer entry arrived
         [Test]
-        public void Compute_FirstSnapshotInitializesRemoteTime()
+        public void Compute_Step2_FirstSnapshotInitializesRemoteTime()
         {
             // add first snapshot
             Snapshot first = new Snapshot(1, Vector3.zero, Quaternion.identity, Vector3.one);
@@ -142,7 +142,7 @@ namespace Mirror.Tests.NetworkTransform2k
         // third step: compute should always wait until the first two snapshots
         //             are older than the time we buffer ('bufferTime')
         [Test]
-        public void Compute_WaitsUntilBufferTime()
+        public void Compute_Step3_WaitsUntilBufferTime()
         {
             // add two snapshots which are exactly 1s and 2s after remoteTime
             Snapshot first = new Snapshot(3, Vector3.zero, Quaternion.identity, Vector3.one);
