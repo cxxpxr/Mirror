@@ -36,7 +36,11 @@ namespace Mirror
             return new Snapshot(
                 Mathd.LerpUnclamped(from.timestamp, to.timestamp, t),
                 Vector3.LerpUnclamped(from.transform.position, to.transform.position, (float)t),
-                Quaternion.LerpUnclamped(from.transform.rotation, to.transform.rotation, (float)t),
+                // IMPORTANT: LerpUnclamped(0, 60, 1.5) extrapolates to ~86.
+                //            SlerpUnclamped(0, 60, 1.5) extrapolates to 90!
+                //            (0, 90, 1.5) is even worse. for Lerp.
+                //            => Slerp works way better for our euler angles.
+                Quaternion.SlerpUnclamped(from.transform.rotation, to.transform.rotation, (float)t),
                 Vector3.LerpUnclamped(from.transform.scale, to.transform.scale, (float)t)
             );
         }
