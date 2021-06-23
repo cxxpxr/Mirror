@@ -328,8 +328,8 @@ namespace Mirror.Tests.NetworkTransform2k
             Assert.That(result, Is.True);
             // remote time should be moved along deltaTime
             Assert.That(remoteTime, Is.EqualTo(2.5 + 0.5));
-            // interpolation started just now, from 0.
-            // and deltaTime is 0.5, so we should be at 0.5 now.
+            // interpolation started at the end = 1
+            // and deltaTime is 0.5, so we should be at 1.5 now.
             Assert.That(interpolationTime, Is.EqualTo(1.5));
             // buffer should be untouched, we are still interpolating between the two
             Assert.That(buffer.Count, Is.EqualTo(2));
