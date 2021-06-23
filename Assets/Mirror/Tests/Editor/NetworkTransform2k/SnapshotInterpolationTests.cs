@@ -6,12 +6,18 @@ namespace Mirror.Tests.NetworkTransform2k
 {
     public class SnapshotInterpolationTests
     {
+        // buffer for convenience so we don't have to create it manually each time
+        SortedList<double, Snapshot> buffer;
+
+        [SetUp]
+        public void SetUp()
+        {
+            buffer = new SortedList<double, Snapshot>();
+        }
+
         [Test]
         public void InsertIfNewEnough()
         {
-            // empty buffer
-            SortedList<double, Snapshot> buffer = new SortedList<double, Snapshot>();
-
             // inserting a first value should always work
             Snapshot first = new Snapshot(1, Vector3.zero, Quaternion.identity, Vector3.one);
             SnapshotInterpolation.InsertIfNewEnough(first, buffer);
