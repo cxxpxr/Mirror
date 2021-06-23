@@ -82,14 +82,60 @@ namespace Mirror.Tests.NetworkTransform2k
             Assert.That(between.transform.position.z, Is.EqualTo(1.5).Within(Mathf.Epsilon));
 
             // check rotation
+            // (epsilon is slightly too small)
             Assert.That(between.transform.rotation.eulerAngles.x, Is.EqualTo(0).Within(Mathf.Epsilon));
-            Assert.That(between.transform.rotation.eulerAngles.y, Is.EqualTo(45).Within(Mathf.Epsilon));
+            Assert.That(between.transform.rotation.eulerAngles.y, Is.EqualTo(45).Within(0.001));
             Assert.That(between.transform.rotation.eulerAngles.z, Is.EqualTo(0).Within(Mathf.Epsilon));
 
             // check scale
             Assert.That(between.transform.scale.x, Is.EqualTo(3.5).Within(Mathf.Epsilon));
             Assert.That(between.transform.scale.y, Is.EqualTo(3.5).Within(Mathf.Epsilon));
             Assert.That(between.transform.scale.z, Is.EqualTo(3.5).Within(Mathf.Epsilon));
+        }
+
+        // our interpolation should be capable of extrapolating beyond t=[0,1]
+        // if necessary. especially for quaternion interpolation, this is not
+        // obvious.
+        [Test]
+        public void Interpolate_Extrapolates()
+        {
+            Snapshot from = new Snapshot(
+                1,
+                new Vector3(1, 1, 1),
+                Quaternion.Euler(new Vector3(0, 0, 0)),
+                new Vector3(3, 3, 3)
+            );
+
+            Snapshot to = new Snapshot(
+                2,
+                new Vector3(2, 2, 2),
+                Quaternion.Euler(new Vector3(0, 60, 0)),
+                new Vector3(4, 4, 4)
+            );
+
+            // interpolate with t=1.5, so it extrapolates by 1.5
+            Snapshot between = SnapshotInterpolation.Interpolate(from, to, 1.5);
+
+            // check time
+            Assert.That(between.timestamp, Is.EqualTo(2.5).Within(Mathf.Epsilon));
+
+            // check position
+            Assert.That(between.transform.position.x, Is.EqualTo(2.5).Within(Mathf.Epsilon));
+            Assert.That(between.transform.position.y, Is.EqualTo(2.5).Within(Mathf.Epsilon));
+            Assert.That(between.transform.position.z, Is.EqualTo(2.5).Within(Mathf.Epsilon));
+
+            // check rotation
+            // IMPORTANT: Quaternion.LerpUnclamped gives ~86.
+            //            Quaternion.SlerpUnclamped gives 90!
+            //            => Slerp is better for our eule rangle interpolation.
+            Assert.That(between.transform.rotation.eulerAngles.x, Is.EqualTo(0).Within(Mathf.Epsilon));
+            Assert.That(between.transform.rotation.eulerAngles.y, Is.EqualTo(90).Within(Mathf.Epsilon));
+            Assert.That(between.transform.rotation.eulerAngles.z, Is.EqualTo(0).Within(Mathf.Epsilon));
+
+            // check scale
+            Assert.That(between.transform.scale.x, Is.EqualTo(4.5).Within(Mathf.Epsilon));
+            Assert.That(between.transform.scale.y, Is.EqualTo(4.5).Within(Mathf.Epsilon));
+            Assert.That(between.transform.scale.z, Is.EqualTo(4.5).Within(Mathf.Epsilon));
         }
 
         // first step: with empty buffer and defaults, nothing should happen
