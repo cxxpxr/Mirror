@@ -91,128 +91,6 @@ namespace Mirror
             targetComponent.localScale = snapshot.transform.scale;
         }
 
-        // helper function to apply snapshots.
-        // we use the same one on server and client.
-        // => called every Update() depending on authority.
-        void ApplySnapshots(ref double remoteTime, ref double interpolationTime, SortedList<double, Snapshot> buffer)
-        {
-            //Debug.Log($"{name} snapshotbuffer={buffer.Count}");
-
-            // we buffer snapshots for 'bufferTime'
-            // for example:
-            //   * we buffer for 3 x sendInterval = 300ms
-            //   * the idea is to wait long enough so we at least have a few
-            //     snapshots to interpolate between
-            //   * we process anything older 100ms immediately
-            //
-            // IMPORTANT: snapshot timestamps are _remote_ time
-            // we need to interpolate and calculate buffer lifetimes based on it.
-            // -> we don't know remote's current time
-            // -> NetworkTime.time fluctuates too much, that's no good
-            // -> we _could_ calculate an offset when the first snapshot arrives,
-            //    but if there was high latency then we'll always calculate time
-            //    with high latency
-            // -> at any given time, we are interpolating from snapshot A to B
-            // => seems like A.timestamp += deltaTime is a good way to do it
-
-            // if remote time wasn't initialized yet
-            if (remoteTime == 0)
-            {
-                // then set it to first snapshot received (if any)
-                if (buffer.Count > 0)
-                {
-                    Snapshot first = buffer.Values[0];
-                    remoteTime = first.timestamp;
-                    Debug.Log("remoteTime initialized to " + first.timestamp);
-                }
-                // otherwise wait for the first one
-                else return;
-            }
-
-            // move remote time along deltaTime
-            // TODO we don't have Time.deltaTime double (yet). float delta is fine.
-            // (probably need to speed this up based on buffer size later)
-            remoteTime += Time.deltaTime;
-
-            // interpolation always requires at least two snapshots
-            if (buffer.Count >= 2)
-            {
-                Snapshot first = buffer.Values[0];
-                Snapshot second = buffer.Values[1];
-
-                // and they both need to be older than bufferTime
-                // (because we always buffer for 'bufferTime' seconds first)
-                // (second is always older than first. only check second's time)
-                double threshold = remoteTime - bufferTime;
-                if (second.timestamp <= threshold)
-                {
-                    // we can't use remoteTime for interpolation because we always
-                    // interpolate on two old snapshots.
-                    //   | first.time | second.time | remoteTime |
-                    // translating remoteTime - bufferTime into the past isn't exact.
-                    // let's keep a separate interpolation time that is set when the
-                    // interpolation starts
-                    // TODO we don't have Time.deltaTime double (yet). float delta is fine.
-                    interpolationTime += Time.deltaTime;
-
-                    // delta time is needed a lot
-                    double delta = second.timestamp - first.timestamp;
-
-                    // if interpolation time is already >= delta, then remove
-                    // the snapshot BEFORE we interpolate.
-                    // otherwise we might:
-                    // * overshoot the interpolation to 'second' because t > 1
-                    // * see jitter where InverseLerp clamps t > 1 to t = 1
-                    //   and we miss out on some smooth movement
-                    if (interpolationTime >= delta)
-                    {
-                        // we can only interpolate between the next two, if
-                        // there are actually two remaining after removing one
-                        if (buffer.Count >= 3)
-                        {
-                            // subtract exactly delta from interpolation time
-                            // instead of setting to '0', where we would lose the
-                            // overshoot part and see jitter again.
-                            interpolationTime -= delta;
-                            //Debug.LogWarning($"{name} overshot and is now at: {interpolationTime}");
-
-                            // remove first one from buffer
-                            buffer.RemoveAt(0);
-
-                            // reassign first, second
-                            first = buffer.Values[0];
-                            second = buffer.Values[1];
-
-                            // TODO what if we overshoot more than one? handle that too.
-                        }
-                        // TODO otherwise what?
-                        //      extrapolate and hope for the best?
-                        //      don't interpolate anymore because it would overshoot?
-                    }
-
-                    // first, second, interpolationTime are all absolute values.
-                    // inverse lerp calculate relative 't' interpolation factor.
-                    // TODO store 't' directly instead of all this magic. or not.
-                    // IMPORTANT: this clamps. but we already handle overshoot
-                    //            above
-                    double t = Mathd.InverseLerp(first.timestamp, second.timestamp, first.timestamp + interpolationTime);
-
-                    // TODO catchup
-
-                    //Debug.Log($"{name} first={first.timestamp:F2} second={second.timestamp:F2} remoteTime={remoteTime:F2} interpolationTime={interpolationTime:F2} t={t:F2} snapshotbuffer={buffer.Count}");
-
-                    // interpolate snapshot
-                    Snapshot interpolated = SnapshotInterpolation.Interpolate(first, second, t);
-
-                    // apply snapshot
-                    ApplySnapshot(interpolated);
-
-                    // TODO should we set remoteTime = second.time for precision?
-                    // probably better not. we are not exactly at second.time.
-                }
-            }
-        }
-
         // cmd /////////////////////////////////////////////////////////////////
         // Cmds for both channels depending on configuration
         // => only send position/rotation/scale.
@@ -313,8 +191,10 @@ namespace Mirror
             //    then we don't need to do anything.
             if (clientAuthority && !isLocalPlayer)
             {
-                // apply snapshots
-                ApplySnapshots(ref serverRemoteClientTime, ref serverInterpolationTime, serverBuffer);
+                // compute snapshot interpolation & apply if any was spit out
+                // TODO we don't have Time.deltaTime double yet. float is fine.
+                if (SnapshotInterpolation.Compute(bufferTime, Time.deltaTime, ref serverRemoteClientTime, ref serverInterpolationTime, serverBuffer, out Snapshot computed))
+                    ApplySnapshot(computed);
             }
         }
 
@@ -343,8 +223,10 @@ namespace Mirror
             // we need to apply snapshots from the buffer
             else
             {
-                // apply snapshots
-                ApplySnapshots(ref clientRemoteServerTime, ref clientInterpolationTime, clientBuffer);
+                // compute snapshot interpolation & apply if any was spit out
+                // TODO we don't have Time.deltaTime double yet. float is fine.
+                if (SnapshotInterpolation.Compute(bufferTime, Time.deltaTime, ref clientRemoteServerTime, ref clientInterpolationTime, clientBuffer, out Snapshot computed))
+                    ApplySnapshot(computed);
             }
         }
 
