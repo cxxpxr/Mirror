@@ -214,7 +214,7 @@ namespace Mirror.Tests.NetworkTransform2k
             // => first at '0' is old enough
             // => second at '1' is _exactly_ old enough via <=
             Snapshot first = new Snapshot(0, new Vector3(1, 1, 1), Quaternion.Euler(new Vector3(0, 0, 0)), new Vector3(3, 3, 3));
-            Snapshot second = new Snapshot(1, new Vector3(2, 2, 2), Quaternion.Euler(new Vector3(0, 90, 0)), new Vector3(4, 4, 4));
+            Snapshot second = new Snapshot(1, new Vector3(2, 2, 2), Quaternion.Euler(new Vector3(0, 60, 0)), new Vector3(4, 4, 4));
             buffer.Add(first.timestamp, first);
             buffer.Add(second.timestamp, second);
 
@@ -240,9 +240,9 @@ namespace Mirror.Tests.NetworkTransform2k
             Assert.That(computed.transform.position.x, Is.EqualTo(1.5).Within(Mathf.Epsilon));
             Assert.That(computed.transform.position.y, Is.EqualTo(1.5).Within(Mathf.Epsilon));
             Assert.That(computed.transform.position.z, Is.EqualTo(1.5).Within(Mathf.Epsilon));
-            // check rotation
+            // check rotation (epsilon is not enough, it's slightly more off)
             Assert.That(computed.transform.rotation.eulerAngles.x, Is.EqualTo(0).Within(Mathf.Epsilon));
-            Assert.That(computed.transform.rotation.eulerAngles.y, Is.EqualTo(45).Within(Mathf.Epsilon));
+            Assert.That(computed.transform.rotation.eulerAngles.y, Is.EqualTo(30).Within(0.001));
             Assert.That(computed.transform.rotation.eulerAngles.z, Is.EqualTo(0).Within(Mathf.Epsilon));
             // check scale
             Assert.That(computed.transform.scale.x, Is.EqualTo(3.5).Within(Mathf.Epsilon));
