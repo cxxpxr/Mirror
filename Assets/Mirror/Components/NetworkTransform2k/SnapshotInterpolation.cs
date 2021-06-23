@@ -165,11 +165,11 @@ namespace Mirror
                     // TODO store 't' directly instead of all this magic. or not.
                     // IMPORTANT: this clamps. but we already handle overshoot
                     //            above
+                    //Debug.Log($"InverseLerp({first.timestamp}, {second.timestamp}, {first.timestamp} + {interpolationTime})");
                     double t = Mathd.InverseLerp(first.timestamp, second.timestamp, first.timestamp + interpolationTime);
+                    //Debug.Log($"first={first.timestamp:F2} second={second.timestamp:F2} remoteTime={remoteTime:F2} interpolationTime={interpolationTime:F2} t={t:F2} snapshotbuffer={buffer.Count}");
 
                     // TODO catchup
-
-                    //Debug.Log($"{name} first={first.timestamp:F2} second={second.timestamp:F2} remoteTime={remoteTime:F2} interpolationTime={interpolationTime:F2} t={t:F2} snapshotbuffer={buffer.Count}");
 
                     // interpolate snapshot
                     computed = Interpolate(first, second, t);
