@@ -46,6 +46,12 @@ namespace Mirror
 
         // "Experimentally I’ve found that the amount of delay that works best
         //  at 2-5% packet loss is 3X the packet send rate"
+        // NOTE: we do NOT use a dyanmically changing buffer size.
+        //       it would come with a lot of complications, e.g. buffer time
+        //       advantages/disadvantages for different connections.
+        //       Glenn Fiedler's recommendation seems solid, and should cover
+        //       the vast majority of connections.
+        //       (a player with 2000ms latency will have issues no matter what)
         [Tooltip("Snapshots are buffered for sendInterval * multiplier seconds. At 2-5% packet loss, 3x supposedly works best.")]
         public int bufferTimeMultiplier = 3;
         public float bufferTime => sendInterval * bufferTimeMultiplier;
