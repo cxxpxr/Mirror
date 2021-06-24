@@ -13,19 +13,22 @@ namespace Mirror
         // insert into snapshot buffer if newer than first entry
         public static void InsertIfNewEnough(Snapshot snapshot, SortedList<double, Snapshot> buffer)
         {
-            // drop any snapshots before ('<=') first snapshot.
-            // they don't matter anymore.
-            if (buffer.Count > 0 &&
+            // we need to drop any snapshot which is older ('<=')
+            // the snapshots we are already working with.
+
+            // if size == 1, then we used the first one to initialize remote
+            // time etc. already. so only add snapshots that are newer.
+            if (buffer.Count == 1 &&
                 snapshot.timestamp <= buffer.Values[0].timestamp)
                 return;
 
-            // the 'ACB' problem:
+            // for size >= 2, we are already interpolating between the first two
+            // so only add snapshots that are newer than the second entry.
+            // aka the 'ACB' problem:
             //   if we have a snapshot A at t=0 and C at t=2,
             //   we start interpolating between them.
             //   if suddenly B at t=1 comes in unexpectely,
             //   we should NOT suddenly steer towards B.
-            // => inserting between the first two snapshot should never be allowed
-            //    in order to avoid all kinds of edge cases.
             if (buffer.Count >= 2 &&
                 snapshot.timestamp <= buffer.Values[1].timestamp)
                 return;
