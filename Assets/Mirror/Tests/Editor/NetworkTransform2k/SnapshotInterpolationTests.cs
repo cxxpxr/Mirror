@@ -35,22 +35,38 @@ namespace Mirror.Tests.NetworkTransform2k
             Assert.That(buffer.Values[0], Is.EqualTo(first));
             Assert.That(buffer.Values[1], Is.EqualTo(second));
 
-            // insert between first and second should work (for now)
-            Snapshot between = new Snapshot(1.5, Vector3.zero, Quaternion.identity, Vector3.one);
-            SnapshotInterpolation.InsertIfNewEnough(between, buffer);
-            Assert.That(buffer.Count, Is.EqualTo(3));
-            Assert.That(buffer.Values[0], Is.EqualTo(first));
-            Assert.That(buffer.Values[1], Is.EqualTo(between));
-            Assert.That(buffer.Values[2], Is.EqualTo(second));
-
             // insert after second should work
             Snapshot after = new Snapshot(2.5, Vector3.zero, Quaternion.identity, Vector3.one);
             SnapshotInterpolation.InsertIfNewEnough(after, buffer);
-            Assert.That(buffer.Count, Is.EqualTo(4));
+            Assert.That(buffer.Count, Is.EqualTo(3));
             Assert.That(buffer.Values[0], Is.EqualTo(first));
-            Assert.That(buffer.Values[1], Is.EqualTo(between));
-            Assert.That(buffer.Values[2], Is.EqualTo(second));
-            Assert.That(buffer.Values[3], Is.EqualTo(after));
+            Assert.That(buffer.Values[1], Is.EqualTo(second));
+            Assert.That(buffer.Values[2], Is.EqualTo(after));
+        }
+
+        // the 'ACB' problem:
+        //   if we have a snapshot A at t=0 and C at t=2,
+        //   we start interpolating between them.
+        //   if suddenly B at t=1 comes in unexpectely,
+        //   we should NOT suddenly steer towards B.
+        // => inserting between the first two snapshot should never be allowed
+        //    in order to avoid all kinds of edge cases.
+        [Test]
+        public void InsertIfNewEnough_ACB_Problem()
+        {
+            Snapshot a = new Snapshot(0, Vector3.zero, Quaternion.identity, Vector3.one);
+            Snapshot b = new Snapshot(1, Vector3.zero, Quaternion.identity, Vector3.one);
+            Snapshot c = new Snapshot(2, Vector3.zero, Quaternion.identity, Vector3.one);
+
+            // insert A and C
+            SnapshotInterpolation.InsertIfNewEnough(a, buffer);
+            SnapshotInterpolation.InsertIfNewEnough(c, buffer);
+
+            // trying to insert B between the first two snapshots shoudl fail
+            SnapshotInterpolation.InsertIfNewEnough(b, buffer);
+            Assert.That(buffer.Count, Is.EqualTo(2));
+            Assert.That(buffer.Values[0], Is.EqualTo(a));
+            Assert.That(buffer.Values[1], Is.EqualTo(c));
         }
 
         [Test]

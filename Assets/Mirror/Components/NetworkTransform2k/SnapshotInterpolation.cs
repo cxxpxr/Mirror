@@ -18,6 +18,17 @@ namespace Mirror
                 buffer.Values[0].timestamp > snapshot.timestamp)
                 return;
 
+            // the 'ACB' problem:
+            //   if we have a snapshot A at t=0 and C at t=2,
+            //   we start interpolating between them.
+            //   if suddenly B at t=1 comes in unexpectely,
+            //   we should NOT suddenly steer towards B.
+            // => inserting between the first two snapshot should never be allowed
+            //    in order to avoid all kinds of edge cases.
+            if (buffer.Count >= 2 &&
+                snapshot.timestamp <= buffer.Values[1].timestamp)
+                return;
+
             // otherwise sort it into the list
             buffer.Add(snapshot.timestamp, snapshot);
         }
