@@ -11,6 +11,7 @@ namespace Mirror
     public static class SnapshotInterpolation
     {
         // insert into snapshot buffer if newer than first entry
+        // this should ALWAYS be used when inserting into a snapshot buffer!
         public static void InsertIfNewEnough(Snapshot snapshot, SortedList<double, Snapshot> buffer)
         {
             // we need to drop any snapshot which is older ('<=')
