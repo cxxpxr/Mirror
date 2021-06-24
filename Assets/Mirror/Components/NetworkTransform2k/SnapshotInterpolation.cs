@@ -13,9 +13,10 @@ namespace Mirror
         // insert into snapshot buffer if newer than first entry
         public static void InsertIfNewEnough(Snapshot snapshot, SortedList<double, Snapshot> buffer)
         {
-            // drop it if it's older than the first snapshot
+            // drop any snapshots before ('<=') first snapshot.
+            // they don't matter anymore.
             if (buffer.Count > 0 &&
-                buffer.Values[0].timestamp > snapshot.timestamp)
+                snapshot.timestamp <= buffer.Values[0].timestamp)
                 return;
 
             // the 'ACB' problem:
