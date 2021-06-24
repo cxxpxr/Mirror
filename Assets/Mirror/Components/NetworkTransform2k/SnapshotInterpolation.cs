@@ -56,6 +56,11 @@ namespace Mirror
         // remoteTime: the remote's time, moved along deltaTime every compute.
         // interpolationTime: time in interpolation. moved along deltaTime.
         // buffer: our buffer of snapshots.
+        //         Compute() assumes full integrity of the snapshots.
+        //         for example, when interpolating between A=0 and C=2,
+        //         make sure that you don't add B=1 between A and C if that
+        //         snapshot arrived after we already started interpolating.
+        //      => InsertIfNewEnough needs to protect against the 'ACB' problem
         //
         // returns
         //   'true' if it spit out a snapshot to apply.
